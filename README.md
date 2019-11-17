@@ -9,7 +9,7 @@ Click image to link to YouTube video.
 0 step. open manipulator Ros packages setting.   
 http://emanual.robotis.com/docs/en/platform/openmanipulator_x/ros_setup/#install-ros-packages  
 
-1 step. open_manipulator_save_and_load setting.   
+1 step. open_manipulator_save_and_load package setting.   
 ```bash
 $ cd ~/catkin_ws/src
 $ git clone https://github.com/minwoominwoominwoo7/open_manipulator_save_and_load.git
