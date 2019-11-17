@@ -1,6 +1,5 @@
 ## Description 
-This is a open manipulator ROS application package. Disable torque of Open manipulator and move Open manipulator by hand.   
-Then, the joint value is saved in the file at 0.1 msec intervals.Then you can read the file and move open manipulator at ROS.  
+This is a open manipulator ROS application package. Disable torque of Open manipulator and move Open manipulator by hand. Then,the joint value is saved in the file at 0.1 msec intervals.Then you can read the file and move open manipulator at ROS.  
 
 Click image to link to YouTube video.  
 [![Video Label](http://img.youtube.com/vi/PH-7JwGH9uM/0.jpg)](https://youtu.be/PH-7JwGH9uM?t=0s)   
