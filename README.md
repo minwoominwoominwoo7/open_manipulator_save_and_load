@@ -39,10 +39,10 @@ Enter 3 by keyboard, Then Open manipulator will move itself by loading the file.
 ## Speed Tunning
 When loading the movement file by pressing the 3 key, you can modify the speed of the movement by increasing the number below.  
 file location is nodes/save_and_load  
-```
+```bash
                 self.count = self.count + 15
                 #self.count = self.count + 8 # movement speed slow
                 #self.count = self.count + 25  # movement speed fast
-```bash
+```
 
   
