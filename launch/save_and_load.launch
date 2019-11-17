@@ -1,0 +1,8 @@
+<launch>
+  <arg name="use_robot_name"         default="open_manipulator"/>
+  <arg name="planning_group"         default="arm" />
+  <node name="save_and_load" pkg="open_manipulator_save_and_load" type="save_and_load" output="screen">
+    <param name="robot_name"  value="$(arg use_robot_name)"/>
+    <param name="planning_group"  value="$(arg planning_group)"/>
+  </node>
+</launch>

@@ -1,0 +1,186 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import rospy, roslaunch
+import sys, select, os
+from sensor_msgs.msg import JointState
+from open_manipulator_msgs.srv import SetActuatorState
+from open_manipulator_msgs.srv import SetJointPosition
+from open_manipulator_msgs.msg import JointPosition
+import rospkg
+if os.name == 'nt':
+  import msvcrt
+else:
+  import tty, termios
+
+msg = """
+---------------------------
+1. Start to save joint data
+2. Stop to save joint data
+3. Load to joint data
+---------------------------
+"""  
+ 
+class JointDataSave():
+    def __init__(self):
+
+        if os.name != 'nt':
+            self.settings = termios.tcgetattr(sys.stdin)
+
+        self.planning_group = rospy.get_param("~planning_group")
+        self.open_manipulator_joint_states_sub_ = rospy.Subscriber('/open_manipulator/joint_states', JointState, self.jointStatesCallback)
+        self.set_actuator_state = rospy.ServiceProxy('/open_manipulator/set_actuator_state', SetActuatorState)
+        self.set_joint_position = rospy.ServiceProxy('/open_manipulator/goal_joint_space_path', SetJointPosition)
+        self.set_gripper_position = rospy.ServiceProxy('/open_manipulator/goal_tool_control', SetJointPosition)
+        self.jointStates = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.state = 0
+        self.count = 0
+
+        #ActuatorState disable 
+        resp = self.set_actuator_state(False)
+        rospy.loginfo(' ActuatorState disable command %d ', resp.is_planned )
+        #Get package path
+        rospack = rospkg.RosPack()
+        rospack.list() 
+        package_path = rospack.get_path('open_manipulator_save_and_load')
+
+        print(msg)
+        while not rospy.is_shutdown():
+
+            if self.state != 3 :
+                key = self.getKey() 
+                if key == '1' and self.state == 0:
+                    self.state = 1     
+                    rospy.loginfo('Press 1,  Start to save joint data' )           
+                elif key == '2' and self.state == 1 :
+                    self.state = 2
+                    rospy.loginfo('Press 2,  Stop to save joint data,\n Save file path is %s', package_path + "/cfg/output.txt")
+                elif key == '3' and self.state == 0 :
+                    self.state = 3
+                    rospy.loginfo('Press 3,  Load joint data,\n load file path is %s', package_path + "/cfg/output.txt")
+                elif key == '\x03' :                
+                    rospy.loginfo('while finish' )
+                    break
+
+            if self.state == 0 :
+                self.count = 0
+
+            elif self.state == 1 :
+                #save joint data to file
+                if self.count == 0:
+                    #ActuatorState disable 
+                    resp = self.set_actuator_state(False)
+                    rospy.loginfo(' ActuatorState disable command %d ', resp.is_planned )                    
+                    self.f = open(package_path + "/cfg/output.txt", 'w')                    
+                data = str(self.jointStates[0]) + "," + str(self.jointStates[1]) + "," + str(self.jointStates[2]) + "," + \
+                    str(self.jointStates[3])+ "," + str(self.jointStates[4]) + "\n"
+                self.f.write(data)
+                rospy.loginfo('%d _ saving J0:%.3f, J1:%.3f, J2:%.3f, J3:%.3f, Gripper:%.3f', self.count, self.jointStates[0],self.jointStates[1], \
+                    self.jointStates[2],self.jointStates[3],self.jointStates[4] )
+                self.count = self.count + 1     
+                #rospy.sleep(0.01) 
+
+            elif self.state == 2 :
+                self.f.close()
+                print(msg)
+                self.state = 0
+
+            elif self.state == 3 : 
+                #load joint data to file   
+                if self.count == 0:
+                    #ActuatorState enable 
+                    resp = self.set_actuator_state(True)
+                    rospy.loginfo(' ActuatorState enable command %d ', resp.is_planned )   
+                    with open(package_path+'/cfg/output.txt') as data:
+                        inputfile = [[float(i) for i in line.split(",")] for line in data.readlines()]                
+
+                if self.count > ( len(inputfile) - 1 ):
+                    print(msg)
+                    self.state = 0
+                    try: 
+                        joint_position = JointPosition()
+                        joint_position.joint_name = ['joint1','joint2','joint3','joint4']                
+                        joint_position.position =  [0.0, 0.167, 0.273, 1.195]
+                        path_time = position_path_time
+                        resp1 = self.set_joint_position(self.planning_group,joint_position, 5)
+                        #print 'resp1 {}'.format(resp1.is_planned) 
+                        rospy.sleep(5) 
+                    except rospy.ServiceException, e:
+                        print "Service call failed: %s"%e
+                    resp = self.set_actuator_state(False)
+                    rospy.loginfo(' ActuatorState disable command %d ', resp.is_planned )                           
+                    continue
+
+                if self.count == 0 :
+                    position_path_time = 2 
+                    gripper_path_time = 1 
+                    operating_time = 2
+                else :
+                    position_path_time = 0.5
+                    gripper_path_time = 0.5
+                    operating_time = 0.2 
+
+                rospy.loginfo('%d _ loading J0:%.3f, J1:%.3f, J2:%.3f, J3:%.3f, Gripper:%.3f', self.count,\
+                            inputfile[self.count][0], inputfile[self.count][1],inputfile[self.count][2], inputfile[self.count][3], inputfile[self.count][4])  
+                try: 
+                    joint_position = JointPosition()
+                    joint_position.joint_name = ['joint1','joint2','joint3','joint4']                
+                    joint_position.position =  [inputfile[self.count][0], inputfile[self.count][1], \
+                                                    inputfile[self.count][2], inputfile[self.count][3]]
+                    path_time = position_path_time
+                    resp1 = self.set_joint_position(self.planning_group,joint_position, position_path_time)
+                    #print 'resp1 {}'.format(resp1.is_planned) 
+                    #rospy.sleep(position_path_time) 
+                except rospy.ServiceException, e:
+                    print "Service call failed: %s"%e
+                
+                try: 
+                    gripper_position = JointPosition()
+                    gripper_position.joint_name = ['gripper']
+                    gripper_position.position =  [inputfile[self.count][4]]
+                    path_time = gripper_path_time
+                    resp1 = self.set_gripper_position(self.planning_group,gripper_position, gripper_path_time)
+                    #print 'resp1 {}'.format(resp1.is_planned) 
+                    #rospy.sleep(0.2) 
+                except rospy.ServiceException, e:
+                    print "Service call failed: %s"%e
+
+                self.count = self.count + 15
+                #self.count = self.count + 8 # movement speed slow
+                #self.count = self.count + 25  # movement speed fast
+                rospy.sleep(operating_time)                       
+                                      
+            
+
+    def getKey(self):
+        if os.name == 'nt':
+            return msvcrt.getch()
+
+        tty.setraw(sys.stdin.fileno())
+        rlist, _, _ = select.select([sys.stdin], [], [], 0.01)
+        if rlist:
+            key = sys.stdin.read(1)
+        else:
+            key = ''
+
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+        return key            
+
+    def jointStatesCallback(self, msg):
+        self.jointStates[0] = msg.position[0]
+        self.jointStates[1] = msg.position[1]
+        self.jointStates[2] = msg.position[2]
+        self.jointStates[3] = msg.position[3]
+        self.jointStates[4] = msg.position[4]
+        #rospy.loginfo('joint %.2f, %.2f,%.2f,%.2f,', self.jointStates[0], self.jointStates[1], self.jointStates[2], self.jointStates[3])
+
+    def execute(self):
+        pass
+
+    def main(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    rospy.init_node('joint_data_save')
+    node = JointDataSave()
+    node.main()
