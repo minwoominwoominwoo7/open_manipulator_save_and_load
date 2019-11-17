@@ -14,7 +14,7 @@ http://emanual.robotis.com/docs/en/platform/openmanipulator_x/ros_setup/#install
 1 step. open_manipulator_save_and_load setting.   
 ```bash
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/orbbec/ros_astra_camera.git
+$ git clone https://github.com/minwoominwoominwoo7/open_manipulator_save_and_load.git
 $ ~/catkin_ws && catkin_make 
 ```
 
