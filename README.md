@@ -1,7 +1,5 @@
 ## Description 
-This is a open manipulator ROS application package.   
-Disable torque of Open manipulator and move Open manipulator by hand. 
-Then, the joint value is saved in the file at 0.1 msec intervals.Then it will read the file and move A.  
+This is a open manipulator ROS application package. Disable torque of Open manipulator and move Open manipulator by hand. Then,the joint value is saved in the file at 0.1 msec intervals.Then you can read the file and move open manipulator at ROS.  
 
 Click image to link to YouTube video.  
 [![Video Label](http://img.youtube.com/vi/PH-7JwGH9uM/0.jpg)](https://youtu.be/PH-7JwGH9uM?t=0s)   
@@ -11,10 +9,10 @@ Click image to link to YouTube video.
 0 step. open manipulator Ros packages setting.   
 http://emanual.robotis.com/docs/en/platform/openmanipulator_x/ros_setup/#install-ros-packages  
 
-1 step. open_manipulator_save_and_load setting.   
+1 step. open_manipulator_save_and_load package setting.   
 ```bash
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/orbbec/ros_astra_camera.git
+$ git clone https://github.com/minwoominwoominwoo7/open_manipulator_save_and_load.git
 $ ~/catkin_ws && catkin_make 
 ```
 
@@ -41,10 +39,10 @@ Enter 3 by keyboard, Then Open manipulator will move itself by loading the file.
 ## Speed Tunning
 When loading the movement file by pressing the 3 key, you can modify the speed of the movement by increasing the number below.  
 file location is nodes/save_and_load  
-```
+```bash
                 self.count = self.count + 15
                 #self.count = self.count + 8 # movement speed slow
                 #self.count = self.count + 25  # movement speed fast
-```bash
+```
 
   
